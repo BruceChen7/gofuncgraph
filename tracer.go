@@ -17,9 +17,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-var (
-	OffsetPattern *regexp.Regexp
-)
+var OffsetPattern *regexp.Regexp
 
 func init() {
 	OffsetPattern = regexp.MustCompile(`\+\d+$`)
@@ -125,6 +123,7 @@ requireConfirm:
 		goto requireConfirm
 	}
 
+	// 获取goid offset
 	goidOffset, err := t.elf.FindGoidOffset()
 	if err != nil {
 		return
@@ -138,9 +137,11 @@ requireConfirm:
 		GoidOffset: goidOffset,
 		GOffset:    gOffset,
 	}); err != nil {
+		log.Errorf("failed to load uprobes: %v", err)
 		return
 	}
 	if err = t.bpf.Attach(t.bin, uprobes); err != nil {
+		log.Errorf("failed to attach uprobes: %v", err)
 		return
 	}
 

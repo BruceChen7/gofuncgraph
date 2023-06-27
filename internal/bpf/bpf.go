@@ -87,12 +87,15 @@ func (b *BPF) Load(uprobes []uprobe.Uprobe, opts LoadOptions) (err error) {
 			break
 		}
 	}
+	// 用来重新写C 语言二进制常量
 	if err = spec.RewriteConstants(map[string]interface{}{"CONFIG": b.BpfConfig(fetchArgs, opts.GoidOffset, opts.GOffset)}); err != nil {
+		log.Errorf("rewrite constants failed: %v", err)
 		return
 	}
 	if err = spec.LoadAndAssign(b.objs, &ebpf.CollectionOptions{
 		Programs: ebpf.ProgramOptions{LogSize: ebpf.DefaultVerifierLogSize * 4},
 	}); err != nil {
+		log.Errorf("load and assign failed: %v", err)
 		return
 	}
 

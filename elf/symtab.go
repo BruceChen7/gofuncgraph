@@ -8,6 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Symbols returns the ELF symbols
 func (e *ELF) Symbols() (symbols []elf.Symbol, symnames map[string]elf.Symbol, err error) {
 	if _, ok := e.cache["symbols"]; ok {
 		return e.cache["symbols"].([]elf.Symbol), e.cache["symnames"].(map[string]elf.Symbol), nil

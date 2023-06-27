@@ -14,5 +14,6 @@ headers=(
 )
 
 # Fetch libbpf release and extract the desired headers
+# 解压缩后开始重命名下载文件
 curl -sL "https://github.com/libbpf/libbpf/archive/refs/tags/v${LIBBPF_VERSION}.tar.gz" | \
     tar -xz --xform='s#.*/##' "${headers[@]}"

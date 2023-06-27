@@ -60,12 +60,14 @@ func New(bin string) (_ *ELF, err error) {
 	if err != nil {
 		str = nil
 	}
+	// dwarf data
 	dwarfData, err := dwarf.New(abbrev, aranges, frame, info, line, pubnames, ranges, str)
 	if err != nil {
 		println("...")
 		return
 	}
 	return &ELF{
+		// 文件名称
 		bin:       bin,
 		binFile:   binFile,
 		elfFile:   elfFile,
