@@ -60,10 +60,10 @@ func New(bin string) (_ *ELF, err error) {
 	if err != nil {
 		str = nil
 	}
-	// dwarf data
+	// dwarf data 包含frame, info, line, pubnames, ranges, str
 	dwarfData, err := dwarf.New(abbrev, aranges, frame, info, line, pubnames, ranges, str)
 	if err != nil {
-		println("...")
+		println("failed to new dwarf data")
 		return
 	}
 	return &ELF{

@@ -98,6 +98,7 @@ func (t *Tracer) Start() (err error) {
 	if err != nil {
 		return
 	}
+	// listen uprobe
 	uprobes, err := uprobe.Parse(t.elf, &uprobe.ParseOptions{
 		ExcludeVendor:   t.excludeVendor,
 		UprobeWildcards: t.uprobeWildcards,
@@ -128,6 +129,7 @@ requireConfirm:
 	if err != nil {
 		return
 	}
+	// 获取g offset
 	gOffset, err := t.elf.FindGOffset()
 	if err != nil {
 		return

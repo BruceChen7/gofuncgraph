@@ -128,8 +128,10 @@ func (e *ELF) LineInfoForPc(pc uint64) (filename string, line int, err error) {
 
 func (e *ELF) FindGoidOffset() (int64, error) {
 	foundRuntimeG := false
+	// 从dwarf中获取runtime.g
 	for die := range e.IterDebugInfo() {
 		switch die.Tag {
+		// 如果是struct
 		case dwarf.TagStructType:
 			v := die.Val(dwarf.AttrName)
 			if v == nil {
@@ -139,21 +141,28 @@ func (e *ELF) FindGoidOffset() (int64, error) {
 			if name != "runtime.g" {
 				continue
 			}
+			// 获取runtime.g的数据结构
 			foundRuntimeG = true
+			// 如果是struct member
 		case dwarf.TagMember:
+			//  之前已经找到了runtime.g swtruct
 			if foundRuntimeG {
+				// 属性名称
 				v := die.Val(dwarf.AttrName)
 				if v == nil {
 					continue
 				}
 				name := v.(string)
+				// 如果不是goid,跳过
 				if name != "goid" {
 					continue
 				}
+				// 获取goid所在的偏移量
 				v = die.Val(dwarf.AttrDataMemberLoc)
 				if v == nil {
 					continue
 				}
+				// 返回偏移量
 				return v.(int64), nil
 			}
 		}

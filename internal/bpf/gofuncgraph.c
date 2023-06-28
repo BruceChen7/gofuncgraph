@@ -14,7 +14,10 @@
 char __license[] SEC("license") = "Dual MIT/GPL";
 
 struct config {
+    // goid_offset
+    // 这个地方是计算出来的偏移量
 	__s64 goid_offset;
+    // 这个地方是计算出来的偏移量
 	__s64 g_offset;
 	bool fetch_args;
 	__u8 padding[7];
@@ -22,6 +25,7 @@ struct config {
 
 static volatile const struct config CONFIG = {};
 
+// 事件的定义
 struct event {
 	__u64 goid;
 	__u64 ip;
@@ -81,6 +85,7 @@ struct bpf_map_def SEC("maps") arg_stack = {
 struct bpf_map_def SEC("maps") event_queue = {
 	.type = BPF_MAP_TYPE_QUEUE,
 	.key_size = 0,
+    // value是一个struct event
 	.value_size = sizeof(struct event),
 	.max_entries = 10000,
 };
@@ -93,6 +98,7 @@ struct bpf_map_def SEC("maps") event_stack = {
 };
 
 struct bpf_map_def SEC("maps") should_trace_goid = {
+    // hash type
 	.type = BPF_MAP_TYPE_HASH,
 	.key_size = sizeof(__u64),
 	.value_size = sizeof(bool),
@@ -111,9 +117,13 @@ __u64 get_goid()
 {
 	__u64 tls_base, g_addr, goid;
 	struct task_struct *task = (struct task_struct *)bpf_get_current_task();
+    // 获取写到tls_base
 	bpf_probe_read_kernel(&tls_base, sizeof(tls_base), (void *)task + fsbase_off);
+    // 获取g 数据结构
 	bpf_probe_read_user(&g_addr, sizeof(g_addr), (void *)(tls_base+CONFIG.g_offset));
+    // 获取go_id
 	bpf_probe_read_user(&goid, sizeof(goid), (void *)(g_addr+CONFIG.goid_offset));
+    // 返回go_id
 	return goid;
 }
 
@@ -233,29 +243,39 @@ int ent(struct pt_regs *ctx)
 {
 	__u32 key = 0;
 	struct event *e = bpf_map_lookup_elem(&event_stack, &key);
+    // 不存在
 	if (!e)
 		return 0;
+    // 存在
 	__builtin_memset(e, 0, sizeof(*e));
 
+    // 获取goid
 	e->goid = get_goid();
+    // 获取地址信息
 	e->ip = ctx->ip;
+    // 记录当前，如果是hash map类型，那么找不到返回0
 	if (!bpf_map_lookup_elem(&should_trace_rip, &e->ip)) {
+        // 之前没有trace过
 		if (!bpf_map_lookup_elem(&should_trace_goid, &e->goid))
 			return 0;
 
 	} else if (!bpf_map_lookup_elem(&should_trace_goid, &e->goid)) {
 		__u64 should_trace = true;
+        // 需要trace 该goroutine
 		bpf_map_update_elem(&should_trace_goid, &e->goid, &should_trace,
 				    BPF_ANY);
 	}
 
+    // 入口的地方
 	e->location = ENTPOINT;
 	e->time_ns = bpf_ktime_get_ns();
 	e->bp = ctx->sp - 8;
+    // 获取调用房的rbp
 	e->caller_bp = ctx->bp;
 
 	void *ra;
 	ra = (void*)ctx->sp;
+    // 获取调用房的地址
 	bpf_probe_read_user(&e->caller_ip, sizeof(e->caller_ip), ra);
 
 	if (!CONFIG.fetch_args)
@@ -264,6 +284,7 @@ int ent(struct pt_regs *ctx)
 	fetch_args(ctx, e->goid, e->ip);
 
 cont:
+    // 进入的时候，在此插入数据
 	return bpf_map_push_elem(&event_queue, e, BPF_EXIST);
 }
 
@@ -276,7 +297,9 @@ int ret(struct pt_regs *ctx)
 		return 0;
 	__builtin_memset(e, 0, sizeof(*e));
 
+    // 获取当前的gorotuine
 	e->goid = get_goid();
+    // 如果不知指定的goroutine id，那么将不再trace
 	if (!bpf_map_lookup_elem(&should_trace_goid, &e->goid))
 		return 0;
 
@@ -284,13 +307,17 @@ int ret(struct pt_regs *ctx)
 	e->ip = ctx->ip;
 	e->time_ns = bpf_ktime_get_ns();
 
+    // 插入一条数据
 	return bpf_map_push_elem(&event_queue, e, BPF_EXIST);
 }
 
+// 写成退出
 SEC("uprobe/goroutine_exit")
 int goroutine_exit(struct pt_regs *ctx)
 {
+    // 获取goid
 	__u64 goid = get_goid();
+    // 删除对应的goid
 	bpf_map_delete_elem(&should_trace_goid, &goid);
 	return 0;
 }

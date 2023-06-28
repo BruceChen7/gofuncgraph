@@ -56,8 +56,9 @@ func New() *BPF {
 func (b *BPF) BpfConfig(fetchArgs bool, goidOffset, gOffset int64) interface{} {
 	return struct {
 		GoidOffset, GOffset int64
-		FetchArgs           bool
-		Padding             [7]byte
+		// 是否获取参数信息
+		FetchArgs bool
+		Padding   [7]byte
 	}{
 		GoidOffset: goidOffset,
 		GOffset:    gOffset,
@@ -76,7 +77,9 @@ func (b *BPF) Load(uprobes []uprobe.Uprobe, opts LoadOptions) (err error) {
 		if err != nil {
 			return
 		}
+		// close event queue
 		b.closers = append(b.closers, b.objs.EventQueue)
+		// close event stack
 		b.closers = append(b.closers, b.objs.EventStack)
 	}()
 
@@ -148,25 +151,39 @@ func (b *BPF) setWanted(uprobe uprobe.Uprobe) (err error) {
 }
 
 func (b *BPF) Attach(bin string, uprobes []uprobe.Uprobe) (err error) {
+	log.Infof("start attaching %s", bin)
 	ex, err := link.OpenExecutable(bin)
 	if err != nil {
+		fmt.Printf("open %s failed: %v\n", bin, err)
 		return
 	}
 	for i, up := range uprobes {
+		// fmt.Printf("attaching %d/%v\n", i, up)
 		var prog *ebpf.Program
+		var linkOption link.UprobeOptions
+		uprobeName := ""
 		switch up.Location {
 		case uprobe.AtEntry:
 			prog = b.objs.Ent
+			fmt.Printf("attach entry programe address: %x\n", up.Address)
+			uprobeName = up.Funcname
 		case uprobe.AtRet:
 			prog = b.objs.Ret
+			log.Infof("attach ret programe\n")
+			uprobeName = up.Funcname
+			linkOption.Offset = up.RelOffset
 		case uprobe.AtGoroutineExit:
+			uprobeName = up.Funcname
+			log.Infof("use goroutine exit programe\n")
 			prog = b.objs.GoroutineExit
 		}
-		fmt.Printf("attaching %d/%d\r", i+1, len(uprobes))
-		up, err := ex.Uprobe("", prog, &link.UprobeOptions{Offset: up.AbsOffset})
+		log.Infof("attaching %d/%v\r", i, up)
+		up, err := ex.Uprobe(uprobeName, prog, &linkOption)
 		if err != nil {
+			log.Errorf("attach failed: %v, upprobe %v", err, up)
 			return err
 		}
+		log.Infof("attaching success %v", up)
 		b.closers = append(b.closers, up)
 
 	}
@@ -198,6 +215,7 @@ func (b *BPF) PollEvents(ctx context.Context) chan GofuncgraphEvent {
 			case <-ctx.Done():
 				return
 			default:
+				// 从event queue中获取远程trace
 				if err := b.objs.EventQueue.LookupAndDelete(nil, &event); err != nil {
 					time.Sleep(time.Millisecond)
 					continue

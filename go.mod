@@ -3,7 +3,7 @@ module github.com/jschwinger233/gofuncgraph
 go 1.20
 
 require (
-	github.com/cilium/ebpf v0.9.0
+	github.com/cilium/ebpf v0.10.0
 	github.com/elastic/go-sysinfo v1.8.0
 	github.com/go-delve/delve v1.8.3
 	github.com/pkg/errors v0.9.1
@@ -11,7 +11,7 @@ require (
 	github.com/urfave/cli/v2 v2.10.3
 	golang.org/x/arch v0.0.0-20220412001346-fc48f9fe4c15
 	golang.org/x/sync v0.1.0
-	golang.org/x/sys v0.0.0-20220627191245-f75cf1eec38b
+	golang.org/x/sys v0.2.0
 )
 
 require (

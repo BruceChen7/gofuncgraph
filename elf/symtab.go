@@ -74,6 +74,7 @@ func (e *ELF) FuncOffset(name string) (offset uint64, err error) {
 		return
 	}
 	section := e.Section(".text")
+	// 相对section的偏移，再加上section的偏移
 	return sym.Value - section.Addr + section.Offset, nil
 }
 
