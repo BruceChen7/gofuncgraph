@@ -23,7 +23,9 @@ type EventManager struct {
 	argCh   <-chan bpf.GofuncgraphArgData
 	uprobes map[string]uprobe.Uprobe
 
-	goEvents     map[uint64][]Event
+	// key 是goroutine id
+	goEvents map[uint64][]Event
+	// key is Goid， value is 入口和出口匹配情况
 	goEventStack map[uint64]uint64
 	goArgs       map[uint64]chan bpf.GofuncgraphArgData
 

@@ -11,6 +11,7 @@ import (
 func (m *EventManager) Handle(event bpf.GofuncgraphEvent) (err error) {
 	m.Add(event)
 	log.Debugf("added event: %+v", event)
+	// 确认是否是关闭栈了
 	if m.CloseStack(event) {
 		if err = m.PrintStack(event.Goid); err != nil {
 			return err

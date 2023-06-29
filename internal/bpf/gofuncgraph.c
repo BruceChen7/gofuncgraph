@@ -127,6 +127,7 @@ __u64 get_goid()
 	return goid;
 }
 
+// 读取不同的寄存器的值
 static __always_inline
 void read_reg(struct pt_regs *ctx, __u8 reg, __u64 *regval)
 {
@@ -268,9 +269,10 @@ int ent(struct pt_regs *ctx)
 
     // 入口的地方
 	e->location = ENTPOINT;
+    // 开启进入的ns
 	e->time_ns = bpf_ktime_get_ns();
 	e->bp = ctx->sp - 8;
-    // 获取调用房的rbp
+    // 获取调用放的rbp
 	e->caller_bp = ctx->bp;
 
 	void *ra;

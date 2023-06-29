@@ -25,8 +25,10 @@ func (m *EventManager) PrintStack(goid uint64) (err error) {
 	indent := ""
 	fmt.Println()
 	startTimeStack := []uint64{}
+	// 打印该goroutine的栈
 	for _, event := range m.goEvents[goid] {
 		lineInfo := "?:?"
+		// 事件发生的时间
 		t := m.bootTime.Add(time.Duration(event.TimeNs)).Format("02 15:04:05.0000")
 		syms, offset, err := m.elf.ResolveAddress(event.Ip)
 		if err != nil {
@@ -40,6 +42,7 @@ func (m *EventManager) PrintStack(goid uint64) (err error) {
 			if err != nil {
 				return err
 			}
+			// 源代码中的位置
 			if filename, line, err := m.elf.LineInfoForPc(event.CallerIp); err == nil {
 				lineInfo = fmt.Sprintf("%s:%d", filename, line)
 			}
@@ -51,12 +54,15 @@ func (m *EventManager) PrintStack(goid uint64) (err error) {
 			if len(indent) == 0 {
 				continue
 			}
+			// 源代码中的位置
 			if filename, line, err := m.elf.LineInfoForPc(event.Ip); err == nil {
 				lineInfo = fmt.Sprintf("%s:%d", filename, line)
 			}
+			// 函数调用的时间
 			elapsed := event.TimeNs - startTimeStack[len(startTimeStack)-1]
 			startTimeStack = startTimeStack[:len(startTimeStack)-1]
 			indent = indent[:len(indent)-2]
+			// 打印时间
 			fmt.Printf("%s %08.4f %s } %s+%d %s\n", t, time.Duration(elapsed).Seconds(), indent, syms[0].Name, offset, lineInfo)
 		}
 
