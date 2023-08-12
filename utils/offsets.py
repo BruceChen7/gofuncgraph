@@ -6,6 +6,20 @@ import argparse
 import subprocess
 import dataclasses
 
+# The pattern is looking for a sequence of characters that starts with one or more word characters (`\w`), 
+# followed by any characters (`.+?`) that are not white space (`\S`), then followed by one or more white space characters (`\s+`). 
+# After the white space, there should be a semicolon (`;`). 
+# Finally, there is a comment pattern (`/\*\s+`) followed by a number pattern (`\d+`).
+
+# struct main.Person {
+# 	struct string              Name;                 /*     0    16 */
+# 	struct string              Address;              /*    16    16 */
+# 	struct string              Phone;                /*    32    16 */
+# 	int                        Age;                  /*    48     8 */
+#
+# 	/* size: 56, cachelines: 1, members: 4 */
+# 	/* last cacheline: 56 bytes */
+# };
 PAT = re.compile(r"(?P<type>\w.+?\S)\s+(?P<name>\w+);\s+/\*\s+(?P<offset>\d+)")
 
 parser = argparse.ArgumentParser(prog="offset_finder")

@@ -68,6 +68,7 @@ func Parse(elf *elf.ELF, opts *ParseOptions) (uprobes []Uprobe, err error) {
 	if err != nil {
 		return nil, err
 	}
+	// 协程退出的虚拟地址相对text的偏移量
 	entOffset, err := elf.FuncOffset("runtime.goexit1")
 	if err != nil {
 		return nil, err
@@ -99,9 +100,9 @@ func Parse(elf *elf.ELF, opts *ParseOptions) (uprobes []Uprobe, err error) {
 			Funcname: funcname,
 			Location: AtEntry,
 			Address:  sym.Value,
-			// 这个是绝对偏移量
+			// 这个是绝对偏移量，相对text 段
 			AbsOffset: entOffset,
-			// 相对偏移量
+			// 相对偏移量，相对funcname的
 			RelOffset: 0,
 			// 写这个数据
 			FetchArgs: fetchArgs[funcname],
@@ -121,9 +122,11 @@ func Parse(elf *elf.ELF, opts *ParseOptions) (uprobes []Uprobe, err error) {
 		for _, retOffset := range retOffsets {
 			fmt.Fprintf(message, "0x%x ", retOffset)
 			uprobes = append(uprobes, Uprobe{
-				Funcname:  funcname,
-				Location:  AtRet,
+				Funcname: funcname,
+				Location: AtRet,
+				// 绝对偏移量，相对text
 				AbsOffset: retOffset,
+				// 相对偏移量，相对entry 
 				RelOffset: retOffset - entOffset,
 			})
 		}

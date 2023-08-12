@@ -165,11 +165,12 @@ func (b *BPF) Attach(bin string, uprobes []uprobe.Uprobe) (err error) {
 		switch up.Location {
 		case uprobe.AtEntry:
 			prog = b.objs.Ent
-			fmt.Printf("attach entry programe address: %x\n", up.Address)
+			log.Infof("attach entry programe address: symbol name %s, absolute %x\n", up.Funcname, up.Address)
 			uprobeName = up.Funcname
 		case uprobe.AtRet:
 			prog = b.objs.Ret
 			log.Infof("attach ret programe\n")
+			// 相对符号的偏移量
 			uprobeName = up.Funcname
 			linkOption.Offset = up.RelOffset
 		case uprobe.AtGoroutineExit:
@@ -177,13 +178,13 @@ func (b *BPF) Attach(bin string, uprobes []uprobe.Uprobe) (err error) {
 			log.Infof("use goroutine exit programe\n")
 			prog = b.objs.GoroutineExit
 		}
-		log.Infof("attaching %d/%v\r", i, up)
+		log.Infof("attaching %d symbol %s relative addr %x absoluet addr %x addr %x\n", i, up.Funcname, up.RelOffset, up.AbsOffset, up.Address)
 		up, err := ex.Uprobe(uprobeName, prog, &linkOption)
 		if err != nil {
 			log.Errorf("attach failed: %v, upprobe %v", err, up)
 			return err
 		}
-		log.Infof("attaching success %v", up)
+		log.Infof("attaching success")
 		b.closers = append(b.closers, up)
 
 	}

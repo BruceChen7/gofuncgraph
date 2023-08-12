@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 func (e *ELF) IterDebugInfo() <-chan *dwarf.Entry {
@@ -80,6 +81,7 @@ func (e *ELF) FuncPcRangeInDwarf(funcname string) (lowpc, highpc uint64, err err
 
 	lowpc = die.Val(dwarf.AttrLowpc).(uint64)
 	switch v := die.Val(dwarf.AttrHighpc).(type) {
+	// 根据类型来决定使用的是相对地址还是绝对地址
 	case uint64:
 		highpc = v
 	case int64:
@@ -130,6 +132,7 @@ func (e *ELF) FindGoidOffset() (int64, error) {
 	foundRuntimeG := false
 	// 从dwarf中获取runtime.g
 	for die := range e.IterDebugInfo() {
+		log.Debugf("drawf entry:%v\n", die)
 		switch die.Tag {
 		// 如果是struct
 		case dwarf.TagStructType:

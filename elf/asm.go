@@ -13,7 +13,9 @@ func (e *ELF) FuncInstructions(name string) (insts []x86asm.Inst, addr, offset u
 	return e.ResolveInstructions(raw), addr, offset, nil
 }
 
+// 找到相对.text段的返回地址
 func (e *ELF) FuncRetOffsets(name string) (offsets []uint64, err error) {
+	// 符号相对section的offset
 	insts, _, offset, err := e.FuncInstructions(name)
 	if err != nil {
 		return
