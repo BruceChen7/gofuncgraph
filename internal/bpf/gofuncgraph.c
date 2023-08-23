@@ -305,6 +305,7 @@ int ret(struct pt_regs *ctx)
 	if (!bpf_map_lookup_elem(&should_trace_goid, &e->goid))
 		return 0;
 
+    // 退出的地方
 	e->location = RETPOINT;
 	e->ip = ctx->ip;
 	e->time_ns = bpf_ktime_get_ns();

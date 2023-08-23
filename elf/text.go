@@ -11,6 +11,8 @@ func (e *ELF) Text() (bytes []byte, err error) {
 	return e.cache["textBytes"].([]byte), nil
 }
 
+// addr is function entry address
+// offset is the offset of the function in the section
 func (e *ELF) FuncRawInstructions(name string) (textBytes []byte, addr, offset uint64, err error) {
 	lowpc, highpc, err := e.FuncPcRangeInDwarf(name)
 	if err != nil {
@@ -24,6 +26,7 @@ func (e *ELF) FuncRawInstructions(name string) (textBytes []byte, addr, offset u
 		return
 	}
 
+	// 如果大于section的大小, 则返回错误
 	if highpc > uint64(len(textBytes))+section.Addr || lowpc < section.Addr {
 		err = errors.Wrap(PcRangeTooLargeErr, name)
 		return

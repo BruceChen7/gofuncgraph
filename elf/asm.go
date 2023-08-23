@@ -10,6 +10,7 @@ func (e *ELF) FuncInstructions(name string) (insts []x86asm.Inst, addr, offset u
 	if err != nil {
 		return
 	}
+	// 传入
 	return e.ResolveInstructions(raw), addr, offset, nil
 }
 
@@ -21,6 +22,8 @@ func (e *ELF) FuncRetOffsets(name string) (offsets []uint64, err error) {
 		return
 	}
 
+	// 遍历获取返回地址， 该地址是相对function entry point 的偏移
+	// insts is the x86 instructions
 	for _, inst := range insts {
 		if inst.Op == x86asm.RET {
 			offsets = append(offsets, offset)
@@ -61,6 +64,7 @@ func (e *ELF) ResolveInstructions(bytes []byte) (insts []x86asm.Inst) {
 			inst = x86asm.Inst{Len: 1}
 		}
 		insts = append(insts, inst)
+		// 开始下一个byte的开始翻译
 		bytes = bytes[inst.Len:]
 		if len(bytes) == 0 {
 			break

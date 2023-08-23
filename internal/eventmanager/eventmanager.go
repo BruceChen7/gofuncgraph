@@ -33,13 +33,16 @@ type EventManager struct {
 }
 
 func New(uprobes []uprobe.Uprobe, elf *elf.ELF, ch <-chan bpf.GofuncgraphArgData) (_ *EventManager, err error) {
+	// 返回主机信息
 	host, err := sysinfo.Host()
 	if err != nil {
 		return
 	}
+	// 启动时间
 	bootTime := host.Info().BootTime
 	uprobesMap := map[string]uprobe.Uprobe{}
 	for _, up := range uprobes {
+		// 偏移量
 		uprobesMap[fmt.Sprintf("%s+%d", up.Funcname, up.RelOffset)] = up
 	}
 	m := &EventManager{
@@ -66,6 +69,7 @@ func (m *EventManager) handleArg() {
 }
 
 func (m *EventManager) GetUprobe(event bpf.GofuncgraphEvent) (_ uprobe.Uprobe, err error) {
+	// 运行的指令
 	syms, offset, err := m.elf.ResolveAddress(event.Ip)
 	if err != nil {
 		return

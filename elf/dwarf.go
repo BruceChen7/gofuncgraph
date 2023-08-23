@@ -30,12 +30,15 @@ func (e *ELF) NonInlinedSubprogramDIEs() (dies map[string]*dwarf.Entry, err erro
 		return v.(map[string]*dwarf.Entry), nil
 	}
 
+	// 获取elf中的符号表
 	_, symnames, err := e.Symbols()
 	if err != nil {
 		return
 	}
 
+	// 遍历dwarf信息
 	dies = map[string]*dwarf.Entry{}
+	// 遍历elf中的debug 符号
 	for die := range e.IterDebugInfo() {
 		if die.Tag == dwarf.TagSubprogram {
 			v := die.Val(dwarf.AttrName)
@@ -53,6 +56,7 @@ func (e *ELF) NonInlinedSubprogramDIEs() (dies map[string]*dwarf.Entry, err erro
 				continue
 			}
 
+			// 在符号表中
 			sym, ok := symnames[name]
 			if !ok {
 				continue
@@ -67,7 +71,9 @@ func (e *ELF) NonInlinedSubprogramDIEs() (dies map[string]*dwarf.Entry, err erro
 	return dies, nil
 }
 
+// 计算函数在drawf的pc范围
 func (e *ELF) FuncPcRangeInDwarf(funcname string) (lowpc, highpc uint64, err error) {
+	// 获取所有函数对应的dwarf信息
 	dies, err := e.NonInlinedSubprogramDIEs()
 	if err != nil {
 		return
@@ -79,6 +85,7 @@ func (e *ELF) FuncPcRangeInDwarf(funcname string) (lowpc, highpc uint64, err err
 		return
 	}
 
+	// 开始的entry point
 	lowpc = die.Val(dwarf.AttrLowpc).(uint64)
 	switch v := die.Val(dwarf.AttrHighpc).(type) {
 	// 根据类型来决定使用的是相对地址还是绝对地址

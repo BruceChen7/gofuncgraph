@@ -89,7 +89,7 @@ func Parse(elf *elf.ELF, opts *ParseOptions) (uprobes []Uprobe, err error) {
 		if err != nil {
 			return nil, err
 		}
-		// 获取符号在text的偏移
+		// 获取符号在text的偏移，函数的入口地址
 		entOffset, err := elf.FuncOffset(funcname)
 		if err != nil {
 			return nil, err
@@ -126,7 +126,7 @@ func Parse(elf *elf.ELF, opts *ParseOptions) (uprobes []Uprobe, err error) {
 				Location: AtRet,
 				// 绝对偏移量，相对text
 				AbsOffset: retOffset,
-				// 相对偏移量，相对entry 
+				// 相对偏移: return 地址 - entry 地址
 				RelOffset: retOffset - entOffset,
 			})
 		}
