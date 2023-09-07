@@ -134,7 +134,28 @@ requireConfirm:
 	if err != nil {
 		return
 	}
+
+	removeDuplicatedUprobes := func(uprobes []uprobe.Uprobe) []uprobe.Uprobe {
+		uprobesMap := map[string]uprobe.Uprobe{}
+		for _, up := range uprobes {
+			// up.FunctionName start with
+			if strings.HasPrefix(up.Funcname, "local") {
+				continue
+			}
+			uprobesMap[fmt.Sprintf("%s+%d+%d+%d", up.Funcname, up.RelOffset, up.AbsOffset, up.Address)] = up
+		}
+		uprobes = []uprobe.Uprobe{}
+		for _, up := range uprobesMap {
+			uprobes = append(uprobes, up)
+		}
+		return uprobes
+	}
+
+	// remove duplicated uprobes
+	uprobes = removeDuplicatedUprobes(uprobes)
+
 	log.Debugf("offset of goid from g is %d, offset of g from fs is -0x%x\n", goidOffset, -gOffset)
+	log.Debugf("uprobes: %v", uprobes)
 	if err = t.bpf.Load(uprobes, bpf.LoadOptions{
 		GoidOffset: goidOffset,
 		GOffset:    gOffset,
