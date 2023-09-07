@@ -5,7 +5,6 @@ import (
 	debugelf "debug/elf"
 	"errors"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/jschwinger233/gofuncgraph/elf"
@@ -37,10 +36,10 @@ func Parse(elf *elf.ELF, opts *ParseOptions) (uprobes []Uprobe, err error) {
 	// 读取符号信息
 	for _, symbol := range symbols {
 		// 获取符号的类型信息
-		fmt.Fprintf(os.Stdout, "symbol: %v\n", symbol)
+		// fmt.Fprintf(os.Stdout, "symbol: %v\n", symbol)
 		if debugelf.ST_TYPE(symbol.Info) == debugelf.STT_FUNC {
 			for _, wc := range append(opts.UprobeWildcards, opts.OutputWildcards...) {
-				fmt.Printf("wildcard: %v\n", wc)
+				// fmt.Printf("wildcard: %v\n", wc)
 				if MatchWildcard(wc, symbol.Name) {
 					if opts.ExcludeVendor && strings.Contains(symbol.Name, "/vendor/") {
 						continue
